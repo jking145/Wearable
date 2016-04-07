@@ -26,9 +26,8 @@ volatile int IBI = 600;             // int that holds the time interval between 
 volatile boolean Pulse = false;     // "True" when User's live heartbeat is detected. "False" when not a "live beat". 
 volatile boolean QS = false;        // becomes true when Arduoino finds a beat.
 
-
 //*---------- CUSTOM VAR CALIBRATION---------*
-boolean startup = false;
+//boolean startup = false;
 int counter = 0;
 unsigned long timer = 0;
 
@@ -42,20 +41,24 @@ int redPin = 9;
 int greenPin = 8;
 int bluePin = 7;
 
+//*---------- CUSTOM VAR CHECKUP----------*
+Timer timer;
+int checkupReadings[10];                   //array to store checkup readings
+
 // Regards Serial OutPut  -- Set This Up to your needs
 static boolean serialVisual = false;   // Set to 'false' by Default.  Re-set to 'true' to see Arduino Serial Monitor ASCII Visual Pulse 
 
 
 void setup(){
   pinMode(buttonPin, INPUT_PULLUP);         //pin for button, enables the internal pull-up resistor
-//  pinMode(blinkPin,OUTPUT);                 //pin that will blink to your heartbeat!
-//  pinMode(fadePin,OUTPUT);                  //pin that will fade to your heartbeat!
+  //  pinMode(blinkPin,OUTPUT);                 //pin that will blink to your heartbeat!
+  //  pinMode(fadePin,OUTPUT);                  //pin that will fade to your heartbeat!
   pinMode(redPin, OUTPUT);                  // sets the pins as output...
   pinMode(greenPin, OUTPUT);   
   pinMode(bluePin, OUTPUT); 
   Serial.begin(115200);                     //we agree to talk fast!
   interruptSetup();                         //sets up to read Pulse Sensor signal every 2mS 
-  
+
   // IF YOU ARE POWERING The Pulse Sensor AT VOLTAGE LESS THAN THE BOARD VOLTAGE, 
   // UN-COMMENT THE NEXT LINE AND APPLY THAT VOLTAGE TO THE A-REF PIN
   //   analogReference(EXTERNAL);   
@@ -90,35 +93,42 @@ void button() {
 
   if(buttonState == LOW) {                                           //SHOULD THIS BE A WHILE LOOP?
     delay(125);
-//blink led 2x so user can move finger
+    //blink led 2x so user can move finger
 
-    calibrate()
-    digitalWrite(bluePin, HIGH);
+    calibrate();
+//    blinkLed(redPin, 2, HIGH, 1000);
   } 
   else {
-//    digitalWrite(ledPin, LOW);    
+    //    digitalWrite(ledPin, LOW);    
   } 
 }
 
 void setColour(int red, int green, int blue) {
-red = 255 - red;
-green = 255 - green;
-blue = 255 - blue;
-analogWrite(redPin, red);
-analogWrite(greenPin, green);
-analogWrite(bluePin, blue);
+  red = 255 - red;
+  green = 255 - green;
+  blue = 255 - blue;
+  digitalWrite(redPin, red);
+  digitalWrite(greenPin, green);
+  digitalWrite(bluePin, blue);
 }
 
-void puslseLed() {
+void blinkLed(int led, int repeat, int intensity, int time) {
+  
+  for(int i = 0; i < repeat; i++) {
+    digitalWrite(led, intensity);
+    delay(time);
+    digitalWrite(led, LOW);
+    delay(time);
+  }
   
 }
 
 //calibrate returns boolean 
 void calibrate() {
-  if(!startup) {
     // FIRST RUN
     timer = millis();
     int average = 0;
+    digitalWrite(redPin, HIGH);
 
     while(millis() - timer < 20000) {
       // stay in here
@@ -138,12 +148,25 @@ void calibrate() {
     Serial.print(" AVERAGE: "); 
     Serial.print(average);
     Serial.println("");
-    startup = true;
     counter = 0;
-  }
-
+    
+     blinkLed(redPin, 2, HIGH, 200);
+     digitalWrite(redPin, LOW);
   /// other 
 }
+
+void checkUp() {
+    timer.every(120000, takeReading);  
+}
+
+void takeReading() {
+    Serial.print(" CHECKUP: "); 
+    Serial.print(BPM);
+    Serial.println("");
+
+
+}
+
 
 
 void ledFadeToBeat(){
@@ -151,6 +174,7 @@ void ledFadeToBeat(){
   fadeRate = constrain(fadeRate,0,255);   //  keep LED fade value from going into negative numbers!
   analogWrite(fadePin,fadeRate);          //  fade LED
 }
+
 
 
 
