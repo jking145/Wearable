@@ -11,7 +11,7 @@
  Read Me:
  https://github.com/WorldFamousElectronics/PulseSensor_Amped_Arduino/blob/master/README.md   
  ------------------------------------------------------------------
- */ 
+ */
 #include "Timer.h" 
 
 //  Variables
@@ -45,6 +45,7 @@ int bluePin = 7;
 //*---------- CUSTOM VAR CHECKUP----------*
 Timer t;
 int checkupReadings[10];                   //array to store checkup readings
+int readingsIndex = 0;
 
 // Regards Serial OutPut  -- Set This Up to your needs
 static boolean serialVisual = false;   // Set to 'false' by Default.  Re-set to 'true' to see Arduino Serial Monitor ASCII Visual Pulse 
@@ -63,7 +64,9 @@ void setup(){
 
   // IF YOU ARE POWERING The Pulse Sensor AT VOLTAGE LESS THAN THE BOARD VOLTAGE, 
   // UN-COMMENT THE NEXT LINE AND APPLY THAT VOLTAGE TO THE A-REF PIN
-  //   analogReference(EXTERNAL);   
+  //   analogReference(EXTERNAL);  
+ 
+// t.every(5000, interruptSetup); 
 }
 
 
@@ -86,7 +89,8 @@ void loop(){
 
   // read the state of the pushbutton value:
   button(); 
-  t.update();
+ t.update();
+  takeReading();
 }
 
 //code here
@@ -113,45 +117,46 @@ void setColour(int red, int green, int blue) {
 }
 
 void blinkLed(int led, int repeat, int intensity, int time) {
-  
+
   for(int i = 0; i < repeat; i++) {
     digitalWrite(led, intensity);
     delay(time);
     digitalWrite(led, LOW);
     delay(time);
   }
-  
+
 }
 
 //calibrate returns boolean 
 void calibrate() {
-    // FIRST RUN
-    timer = millis();
-    int average = 0;
-    digitalWrite(redPin, HIGH);
+  // FIRST RUN
+  timer = millis();
+  int average = 0;
+  digitalWrite(redPin, HIGH);
 
-    while(millis() - timer < 20000) {
-      // stay in here
-      // IBI varialble 
-      if (QS == true) {
-        Serial.print("Counter: "); 
-        Serial.print(counter++);
-        Serial.print(" BPM: "); 
-        Serial.print(BPM);
-        average += BPM;
-        Serial.println("");
-        QS = false;
-      }
+  while(millis() - timer < 20000) {
+    // stay in here
+    // IBI varialble 
+    if (QS == true) {
+      Serial.print("Counter: "); 
+      Serial.print(counter++);
+      Serial.print(" BPM: "); 
+      Serial.print(BPM);
+      average += BPM;
+      Serial.println("");
+      QS = false;
     }
+  }
 
-    average = average / counter;
-    Serial.print(" AVERAGE: "); 
-    Serial.print(average);
-    Serial.println("");
-    counter = 0;
-    
-     blinkLed(redPin, 2, HIGH, 200);
-     digitalWrite(redPin, LOW);
+  average = average / counter;
+  Serial.print(" AVERAGE: "); 
+  Serial.print(average);
+  Serial.println("");
+  counter = 0;
+
+  blinkLed(redPin, 2, HIGH, 200);
+  digitalWrite(redPin, LOW);
+  
   /// other 
 }
 
@@ -163,13 +168,20 @@ void calibrate() {
 
 void takeReading() {
   static int aCounter = 0;
-  Serial.println(aCounter);
-    Serial.print(" CHECKUP: "); 
-    Serial.print(BPM);
-    Serial.println("");
-    aCounter++;
+//  Serial.println(aCounter);
+//  Serial.print(" CHECKUP: "); 
+//  Serial.print(BPM);
+//  Serial.println("");
+//  aCounter++;
+
+  //store BPM from checkup into array
+  checkupReadings[aCounter++] = BPM;
+  Serial.print(" CHECKUP: "); 
+  Serial.println(BPM);
+  if (aCounter > 9) {
+   aCounter = 0; 
+  }
   
-    //store BPM from checkup into array
 }
 
 
@@ -179,6 +191,7 @@ void ledFadeToBeat(){
   fadeRate = constrain(fadeRate,0,255);   //  keep LED fade value from going into negative numbers!
   analogWrite(fadePin,fadeRate);          //  fade LED
 }
+
 
 
 
