@@ -11,7 +11,8 @@
  Read Me:
  https://github.com/WorldFamousElectronics/PulseSensor_Amped_Arduino/blob/master/README.md   
  ------------------------------------------------------------------
- */
+ */ 
+#include "Timer.h" 
 
 //  Variables
 int pulsePin = 0;                 // Pulse Sensor purple wire connected to analog pin 0
@@ -42,7 +43,7 @@ int greenPin = 8;
 int bluePin = 7;
 
 //*---------- CUSTOM VAR CHECKUP----------*
-Timer timer;
+Timer t;
 int checkupReadings[10];                   //array to store checkup readings
 
 // Regards Serial OutPut  -- Set This Up to your needs
@@ -58,6 +59,7 @@ void setup(){
   pinMode(bluePin, OUTPUT); 
   Serial.begin(115200);                     //we agree to talk fast!
   interruptSetup();                         //sets up to read Pulse Sensor signal every 2mS 
+  t.every(2000, takeReading);
 
   // IF YOU ARE POWERING The Pulse Sensor AT VOLTAGE LESS THAN THE BOARD VOLTAGE, 
   // UN-COMMENT THE NEXT LINE AND APPLY THAT VOLTAGE TO THE A-REF PIN
@@ -68,7 +70,7 @@ void setup(){
 //  Where the Magic Happens
 void loop(){
 
-  serialOutput() ;       
+  //serialOutput() ;       
 
   if (QS == true){     // A Heartbeat Was Found
     // BPM and IBI have been Determined
@@ -83,7 +85,8 @@ void loop(){
   delay(20);                             //  take a break
 
   // read the state of the pushbutton value:
-  button();
+  button(); 
+  t.update();
 }
 
 //code here
@@ -91,15 +94,12 @@ void loop(){
 void button() {
   buttonState = digitalRead(buttonPin);
 
-  if(buttonState == LOW) {                                           //SHOULD THIS BE A WHILE LOOP?
+  if(buttonState == LOW) {                                         
     delay(125);
-    //blink led 2x so user can move finger
 
     calibrate();
-//    blinkLed(redPin, 2, HIGH, 1000);
   } 
-  else {
-    //    digitalWrite(ledPin, LOW);    
+  else { 
   } 
 }
 
@@ -155,16 +155,21 @@ void calibrate() {
   /// other 
 }
 
-void checkUp() {
-    timer.every(120000, takeReading);  
-}
+//void checkUp() {
+//    t.every(12000, takeReading);  
+//    blinkLed(bluePin, 2, HIGH, 200);
+//    
+//}
 
 void takeReading() {
+  static int aCounter = 0;
+  Serial.println(aCounter);
     Serial.print(" CHECKUP: "); 
     Serial.print(BPM);
     Serial.println("");
-
-
+    aCounter++;
+  
+    //store BPM from checkup into array
 }
 
 
