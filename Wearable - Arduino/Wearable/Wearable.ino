@@ -47,6 +47,14 @@ Timer t;
 int checkupReadings[10];                   //array to store checkup readings
 int readingsIndex = 0;
 
+//*---------- CUSTOM----------*
+int currentCalibration = -1;
+int previousCalibration = -1;
+
+//*---------- CUSTOM GLOBAL VAR----------*
+int newAverage = 0;
+boolean nextCheck = false;
+
 // Regards Serial OutPut  -- Set This Up to your needs
 static boolean serialVisual = false;   // Set to 'false' by Default.  Re-set to 'true' to see Arduino Serial Monitor ASCII Visual Pulse 
 
@@ -59,14 +67,13 @@ void setup(){
   pinMode(greenPin, OUTPUT);   
   pinMode(bluePin, OUTPUT); 
   Serial.begin(115200);                     //we agree to talk fast!
-  interruptSetup();                         //sets up to read Pulse Sensor signal every 2mS 
-  t.every(2000, takeReading);
+  t.every(5000, takeReading);              //every 2 min do a checkup
+
+  interruptSetup();
 
   // IF YOU ARE POWERING The Pulse Sensor AT VOLTAGE LESS THAN THE BOARD VOLTAGE, 
   // UN-COMMENT THE NEXT LINE AND APPLY THAT VOLTAGE TO THE A-REF PIN
   //   analogReference(EXTERNAL);  
- 
-// t.every(5000, interruptSetup); 
 }
 
 
@@ -84,13 +91,19 @@ void loop(){
     QS = false;                      // reset the Quantified Self flag for next time    
   }
 
-  ledFadeToBeat();                      // Makes the LED Fade Effect Happen 
-  delay(20);                             //  take a break
+  // ledFadeToBeat();                      // Makes the LED Fade Effect Happen 
+  // delay(20);                             //  take a break
 
   // read the state of the pushbutton value:
   button(); 
- t.update();
-  takeReading();
+
+  //update the timer to run the check every 2 min
+  t.update();
+
+  if (nextCheck) {
+    checkArrayAverage();
+    nextCheck = !nextCheck;
+  }
 }
 
 //code here
@@ -101,7 +114,7 @@ void button() {
   if(buttonState == LOW) {                                         
     delay(125);
 
-    calibrate();
+    calibrate(20000);
   } 
   else { 
   } 
@@ -128,13 +141,14 @@ void blinkLed(int led, int repeat, int intensity, int time) {
 }
 
 //calibrate returns boolean 
-void calibrate() {
+void calibrate(int period) {
   // FIRST RUN
+
   timer = millis();
   int average = 0;
   digitalWrite(redPin, HIGH);
 
-  while(millis() - timer < 20000) {
+  while(millis() - timer < period) {
     // stay in here
     // IBI varialble 
     if (QS == true) {
@@ -152,11 +166,12 @@ void calibrate() {
   Serial.print(" AVERAGE: "); 
   Serial.print(average);
   Serial.println("");
+  currentCalibration = average; 
   counter = 0;
 
   blinkLed(redPin, 2, HIGH, 200);
   digitalWrite(redPin, LOW);
-  
+
   /// other 
 }
 
@@ -168,29 +183,67 @@ void calibrate() {
 
 void takeReading() {
   static int aCounter = 0;
-//  Serial.println(aCounter);
-//  Serial.print(" CHECKUP: "); 
-//  Serial.print(BPM);
-//  Serial.println("");
-//  aCounter++;
 
   //store BPM from checkup into array
   checkupReadings[aCounter++] = BPM;
   Serial.print(" CHECKUP: "); 
   Serial.println(BPM);
   if (aCounter > 9) {
-   aCounter = 0; 
+
+    for (int j = 0; j <= 9; j++) {
+      newAverage += checkupReadings[j];
+      checkupReadings[j] = 0;
+    }
+
+    newAverage /= 10;
+    aCounter = 0;
+    nextCheck = true;
   }
-  
+
+  Serial.print(" NEW AVERAGE: "); 
+  Serial.println(newAverage);
 }
 
 
+void checkArrayAverage() {
 
-void ledFadeToBeat(){
-  fadeRate -= 15;                         //  set LED fade value
-  fadeRate = constrain(fadeRate,0,255);   //  keep LED fade value from going into negative numbers!
-  analogWrite(fadePin,fadeRate);          //  fade LED
+  int overBPM = 10;
+  int underBPM = 15;
+
+  if ((newAverage + overBPM) > currentCalibration || (newAverage - underBPM) < currentCalibration){
+    previousCalibration = currentCalibration;
+    calibrate(7000);
+
+    if ((newAverage + overBPM) > currentCalibration || (newAverage - underBPM) < currentCalibration){
+      previousCalibration = currentCalibration;
+      motor(....);
+      newAverage = 0;
+    }
+
+    Serial.print("RECALIBRATING");
+    newAverage = 0;
+  }
 }
+
+
+void motor(   ) {
+
+  }
+
+}
+
+//}
+//void ledFadeToBeat(){
+//  fadeRate -= 15;                         //  set LED fade value
+//  fadeRate = constrain(fadeRate,0,255);   //  keep LED fade value from going into negative numbers!
+//  analogWrite(fadePin,fadeRate);          //  fade LED
+//}
+
+
+
+
+
+
 
 
 
