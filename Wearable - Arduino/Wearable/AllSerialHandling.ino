@@ -17,13 +17,13 @@ void serialOutput(){   // Decide How To Output Serial.
 //  Decides How To OutPut BPM and IBI Data
 void serialOutputWhenBeatHappens(){    
  if (serialVisual == true){            //  Code to Make the Serial Monitor Visualizer Work
-    Serial.print("*** Heart-Beat Happened *** ");  //ASCII Art Madness
-    Serial.print("BPM: ");
-    Serial.print(BPM);
-    Serial.print("  ");
+   // Serial.print("*** Heart-Beat Happened *** ");  //ASCII Art Madness
+  //  Serial.print("BPM: ");
+    //Serial.print(BPM);
+   // Serial.print("  ");
  } else{
-        sendDataToSerial('B',BPM);   // send heart rate with a 'B' prefix
-        sendDataToSerial('Q',IBI);   // send time between beats with a 'Q' prefix
+    //    sendDataToSerial('B',BPM);   // send heart rate with a 'B' prefix
+      //  sendDataToSerial('Q',IBI);   // send time between beats with a 'Q' prefix
  }   
 }
 

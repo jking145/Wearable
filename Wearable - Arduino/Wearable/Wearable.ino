@@ -34,13 +34,14 @@ unsigned long timer = 0;
 
 //*---------- CUSTOM VAR BUTTON---------*
 int buttonPin = 2;
-//int ledPin = 4;
 int buttonState = 0;
 
 //*---------- CUSTOM VAR RGB LED---------*
 int redPin = 9;
 int greenPin = 8;
 int bluePin = 7;
+
+int lightDelay = 20000;
 
 //*---------- CUSTOM VAR CHECKUP----------*
 Timer t;
@@ -54,6 +55,12 @@ int previousCalibration = -1;
 //*---------- CUSTOM GLOBAL VAR----------*
 int newAverage = 0;
 boolean nextCheck = false;
+
+//*---------- CUSTOM MOTOR VAR-----------*
+int motorPin = 5;
+
+unsigned long breathCount;
+
 
 // Regards Serial OutPut  -- Set This Up to your needs
 static boolean serialVisual = false;   // Set to 'false' by Default.  Re-set to 'true' to see Arduino Serial Monitor ASCII Visual Pulse 
@@ -169,17 +176,13 @@ void calibrate(int period) {
   currentCalibration = average; 
   counter = 0;
 
-  blinkLed(redPin, 2, HIGH, 200);
   digitalWrite(redPin, LOW);
+  digitalWrite(bluePin, HIGH);
+  blinkLed(bluePin, 2, HIGH, 500);
+  digitalWrite(bluePin, LOW);
 
   /// other 
 }
-
-//void checkUp() {
-//    t.every(12000, takeReading);  
-//    blinkLed(bluePin, 2, HIGH, 200);
-//    
-//}
 
 void takeReading() {
   static int aCounter = 0;
@@ -216,7 +219,7 @@ void checkArrayAverage() {
 
     if ((newAverage + overBPM) > currentCalibration || (newAverage - underBPM) < currentCalibration){
       previousCalibration = currentCalibration;
-      motor(....);
+      motor(30000);
       newAverage = 0;
     }
 
@@ -226,18 +229,39 @@ void checkArrayAverage() {
 }
 
 
-void motor(   ) {
+void motor(int duration) {
 
+  breathCount = millis();
+  
+
+  while (millis() - breathCount < duration) {
+    digitalWrite(bluePin, HIGH);
+    for(int fadeValue = 0 ; fadeValue <= 255; fadeValue +=5) { 
+      // sets the value (range from 0 to 255):
+      analogWrite(motorPin, fadeValue);          
+      delay(30);
+    }
+    
+    Serial.println("MOTOR");
+    // fade out from max to min in increments of 5 points:
+    for(int fadeValue = 255 ; fadeValue >= 0; fadeValue -=5) { 
+      // sets the value (range from 0 to 255):
+      analogWrite(motorPin, fadeValue);             
+      delay(30);                             
+    }
+    digitalWrite(bluePin, LOW);
   }
-
+  
 }
-
-//}
 //void ledFadeToBeat(){
 //  fadeRate -= 15;                         //  set LED fade value
 //  fadeRate = constrain(fadeRate,0,255);   //  keep LED fade value from going into negative numbers!
 //  analogWrite(fadePin,fadeRate);          //  fade LED
 //}
+
+
+
+
 
 
 
